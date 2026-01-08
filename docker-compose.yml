@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  quantigence_app:
+    # Build the application using the Dockerfile located in the current directory
+    build:
+      context: . 
+      dockerfile: Dockerfile 
+    container_name: quantigence_app
+    
+    # Mount the local code into the container for easy iteration and code changes
+    volumes:
+      - .:/app 
+      
+    # Map the container port to a local port if you are building a web interface (e.g., Gradio)
+    ports:
+      - "8000:8000" 
+      
+    # Load all external service credentials and settings from your .env file
+    env_file:
+      - .env
+      
+    # The command to start your application's server
+    command: python app.py 
+    
+    # Optional: Set a restart policy if the container exits
+    restart: "on-failure"
