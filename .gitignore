@@ -23,9 +23,14 @@ __pycache__
 data
 docs
 duckdb
-app
+/app
 .azure
 notebooks
 neo4j
 things_done.md
 GraphQAChain_Neo4jCypher.md
+# First, ensure the folder itself is not ignored
+!/frontend/
+
+# Then, ensure everything inside it is not ignored
+!/frontend/**
