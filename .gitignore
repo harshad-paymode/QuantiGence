@@ -13,6 +13,9 @@ sec-edgar-filings
 *.parquet
 *.parquet()
 /*.py
+# 2. But do NOT ignore these specific two
+!/app.py
+!/main.py
 /*.txt
 /*.xlsx
 __pycache__
