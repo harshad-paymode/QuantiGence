@@ -4,8 +4,9 @@ from typing import List, Dict, Any
 from .toc import get_table_of_contents
 from edgar import Filing
 from edgar.files.html_documents import TextBlock, TableBlock
+from src.core.logger import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 def get_heading_dict(all_items: List[str], table_of_contents) -> Dict[str, str]:

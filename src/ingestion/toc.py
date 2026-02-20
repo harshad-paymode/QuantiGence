@@ -2,8 +2,9 @@ import math
 import logging
 import pandas as pd
 from typing import Any, Dict
+from src.core.logger import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 def get_table_of_contents(chunk_obj: Any, match_pct: float = 0.3) -> pd.DataFrame:

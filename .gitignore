@@ -19,3 +19,10 @@ __pycache__
 *.json
 data
 docs
+duckdb
+app
+.azure
+notebooks
+neo4j
+things_done.md
+GraphQAChain_Neo4jCypher.md

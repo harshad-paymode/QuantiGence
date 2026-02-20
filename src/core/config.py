@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import Optional
 from typing import Iterable, Mapping
 from frozendict import frozendict
-import Path
+from pathlib import Path
 
 load_dotenv()  # load .env if present
 

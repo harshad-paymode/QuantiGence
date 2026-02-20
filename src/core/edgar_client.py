@@ -2,8 +2,9 @@ import logging
 from typing import Optional
 from edgar import set_identity, Filing, use_local_storage
 from edgar.files.html_documents import TextBlock, TableBlock
+from src.core.logger import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 

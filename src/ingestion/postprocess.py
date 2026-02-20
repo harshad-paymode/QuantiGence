@@ -3,8 +3,9 @@ from typing import List, Dict, Any
 from dataclasses import dataclass
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import Document
+from src.core.logger import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 @dataclass

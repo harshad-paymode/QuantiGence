@@ -11,17 +11,17 @@ from pathlib import Path
 from src.core.logger import configure_logging
 from src.core.config import Paths, Processing
 from src.core.edgar_client import initialize_edgar
-from src.chunking.postprocess import PostProcessor
+from src.ingestion.postprocess import PostProcessor
 from src.core.io import save_json
 from src.core.config import SecFilingConfig
 
 # chunkers
-from src.chunking.tenk_chunker import get_chunks as get_chunks_10k
-from src.chunking.tenq_chunker import get_chunks as get_chunks_10q
+from src.ingestion.tenk_chunker import get_chunks as get_chunks_10k
+from src.ingestion.tenq_chunker import get_chunks as get_chunks_10q
 
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 
@@ -62,7 +62,6 @@ def process_files(kind: str, meta_base: str, out_path: str, get_chunks_fn, proce
 
 
 def main():
-    configure_logging()
     paths = Paths()
     proc = Processing()
     CONFIG = SecFilingConfig()

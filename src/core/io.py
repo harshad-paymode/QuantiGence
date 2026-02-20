@@ -2,8 +2,9 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from src.core.logger import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = configure_logging(logging.INFO)
 
 
 def save_json(path: Path, data: Any, indent: int = 4) -> None:
