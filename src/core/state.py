@@ -62,7 +62,7 @@ class QueryResState(TypedDict):
     company_present: bool
     period_present: bool
 
-def init_query_state(user_query: str, conversation_id: str) -> QueryResState:
+def init_query_state(user_query: str, conversation_id: str = "") -> QueryResState:
     """Initialize empty state for new query"""
     return {
         "conversation_id": conversation_id,

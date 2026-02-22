@@ -91,3 +91,12 @@ INPUT_CLASSIFICATIONS = [
     "FINANCE_RESEARCH_OK",
 ]
 TRANSCRIPT_FOCUS = ["METRICS", "RISKS", "GUIDANCE", "GENERAL"]
+
+RATIO_GROUPS = {
+  "Valuation": ["Price-to-Earnings", "Price-to-Book", "EV-to-EBITDA", "EV-to-Sales", "Price-to-Free-Cash-Flow"],
+  "Profitability": ["Gross Margin", "Operating Margin", "Net Profit Margin", "Return on Equity"],
+  "Liquidity": ["Current Ratio", "Quick Ratio", "Cash Ratio"],
+  "Efficiency": ["Asset Turnover Ratio", "Inventory Turnover Ratio"],
+  "Leverage": ["Debt-to-Equity Ratio", "Debt-to-Assets Ratio"],
+  "Cash Flow": ["Cash Conversion Efficiency", "CAPEX Coverage Ratio"]
+}
