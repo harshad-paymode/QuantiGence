@@ -1,27 +1,44 @@
-version: '3.9'
+# docker-compose.yml
+version: "3.9"
 
 services:
-  quantigence_app:
-    # Build the application using the Dockerfile located in the current directory
-    build:
-      context: . 
-      dockerfile: Dockerfile 
-    container_name: quantigence_app
-    
-    # Mount the local code into the container for easy iteration and code changes
-    volumes:
-      - .:/app 
-      
-    # Map the container port to a local port if you are building a web interface (e.g., Gradio)
+  redis:
+    image: redis:7-alpine
+    container_name: quantigence_redis
+    restart: unless-stopped
     ports:
-      - "8000:8000" 
-      
-    # Load all external service credentials and settings from your .env file
+      - "6379:6379"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quantigence_web
     env_file:
       - .env
-      
-    # The command to start your application's server
-    command: python app.py 
-    
-    # Optional: Set a restart policy if the container exits
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      # for local dev iterate quickly (mount project into container)
+      - ./:/app:cached
     restart: "on-failure"
+    # For development use --reload. In production remove --reload and the volumes mount.
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quantigence_worker
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    volumes:
+      - ./:/app:cached
+    restart: "on-failure"
+    # Use the celery CLI you use locally; adapted to common module name 'tasks'
+    # If your module name differs (e.g., worker.py) update to match: celery -A worker ...
+    command: ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info", "-P", "solo"]
