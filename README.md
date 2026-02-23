@@ -29,37 +29,35 @@ QuantiGence is built for researchers, analysts, and engineers who want transpare
 - **Scalable Data Model** — parquet-based analytics + graph-based reasoning
 
 ## High-level Architecture
-Data Sources
-│
-├── Market Time Series (Parquet)
-├── SEC Filings
-└── Earning's Call Transcript
-│
-▼
-Storage Layer
-│
-├── Parquet (analytics)
-├── Neo4j (knowledge graph)
-├── Redis (task state & memory)
-└── Cosmos DB (persistent metadata)
-│
-▼
-Orchestration Layer
-│
-Supervisor
-├── Researcher
-├── Auditor
-└── Analyst
-│
-▼
-API Layer
-│
-FastAPI + Task Workers
-│
-▼
-Frontend
-│
-Quantitative Dashboard + Qualitative AI
+
+- **Data Sources**  
+  Raw inputs: columnar market data (Parquet), full-text filings, and call transcripts. These are the authoritative inputs that feed both numeric analytics and LLM grounding.
+
+- **Storage Layer**  
+  A polyglot persistence approach:
+  - *Parquet* for compact, fast time-series reads and analytics.
+  - *Neo4j* (or similar graph DB) to store entities, roles, and cross-document links for multi-hop queries.
+  - *Redis* for low-latency orchestration state, caching, and session memory.
+  - *Cosmos DB / document store* for durable metadata, user preferences, and exported provenance.
+
+- **Orchestration Layer**  
+  The Supervisor orchestrates work and enforces policies. Distinct role-workers carry out:
+  - *Researcher* — retrieves passages, KG facts, and numeric slices.
+  - *Auditor* — verifies LLM outputs against sources and assigns evaluation scores.
+  - *Analyst* — composes the final, citation-backed narrative delivered to users.
+
+- **API Layer**  
+  A lightweight HTTP layer (FastAPI) exposes endpoints to the UI and enqueues long-running tasks. Task workers perform background pipelines and results are polled or pushed back to the frontend.
+
+- **Frontend**  
+  Presents synchronized quantitative visuals and qualitative narratives, shows provenance links, and displays evaluation scores (DeepEval). Designed for interactive, multi-turn analyst workflows.
+
+### Design goals reflected in the architecture
+
+- **Separation of concerns** — data, reasoning, verification, and presentation are modular.  
+- **Provenance & auditability** — every generated claim is traceable to data slices or node relationships.  
+- **Scalability** — parquet + async tasks + caching enable efficient handling of large time-series and heavy retrieval.  
+- **Safety-first orchestration** — an explicit Auditor role and evaluation metrics reduce hallucination risk and support human-in-the-loop review.
 
 ## Knowledge Graph — design & schema
 
