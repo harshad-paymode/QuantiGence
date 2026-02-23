@@ -32,6 +32,11 @@
 
 https://github.com/user-attachments/assets/1d0f6cd1-684b-4f2f-ac83-ee51424f25d8
 
+<img width="1892" height="865" alt="preview1" src="https://github.com/user-attachments/assets/a3cd547d-43ca-4f8b-97bb-371eb354a27a" />
+
+<img width="1887" height="877" alt="preview3" src="https://github.com/user-attachments/assets/b212a53b-a26d-4dfa-ab9b-87e4e98ae992" />
+
+
 
 ## Vision & Summary
 
