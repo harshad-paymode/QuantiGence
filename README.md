@@ -89,35 +89,6 @@ QuantiGence models financial intelligence as an entity network.
 
 The Knowledge Graph transforms documents into structured intelligence.
 
-## Core Pipeline (Supervisor → Auditor → Researcher → Analyst)
-
-QuantiGence uses a structured multi-role orchestration model.
-
-### Supervisor
-- Routes tasks
-- Manages memory
-- Enforces grounding policy
-- Controls workflow lifecycle
-
-### Researcher
-- Retrieves relevant filings and data
-- Extracts structured evidence
-- Produces candidate summaries
-
-### Auditor
-- Evaluates responses for faithfulness
-- Checks for hallucinations
-- Scores relevancy
-- Flags unsupported claims
-
-### Analyst
-- Synthesizes final response
-- Integrates evidence
-- Formats citations
-- Produces user-ready narrative
-
-This separation improves reliability and reduces hallucination risk.
-
 ## Context reuse & multi-turn memory
 
 QuantiGence supports structured analytical workflows.
