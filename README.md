@@ -30,9 +30,15 @@
 
 ## Demo
 
+*Demo: end-to-end query → retrieval → audit → final narrative with DeepEval scores and synchronized OHLC candlestick chart.*
+
 https://github.com/user-attachments/assets/1d0f6cd1-684b-4f2f-ac83-ee51424f25d8
 
+*Ratios table view alongside management commentary — category filters, period selection, and provenance-backed narrative.*
+
 <img width="1892" height="865" alt="preview1" src="https://github.com/user-attachments/assets/a3cd547d-43ca-4f8b-97bb-371eb354a27a" />
+
+*Split-screen overview showing Qualitative AI (left) and Quantitative dashboard (right) — synchronized context, query input, and the risk chart.*
 
 <img width="1887" height="877" alt="preview3" src="https://github.com/user-attachments/assets/b212a53b-a26d-4dfa-ab9b-87e4e98ae992" />
 
