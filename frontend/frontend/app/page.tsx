@@ -1,3 +1,380 @@
+// "use client";
+
+// import { useState, useRef, useEffect } from "react";
+// import { 
+//   ResizableHandle, 
+//   ResizablePanel, 
+//   ResizablePanelGroup 
+// } from "@/components/ui/resizable";
+// import { Card } from "@/components/ui/card";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Button } from "@/components/ui/button";
+// import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+// import { Maximize2, Minimize2, BrainCircuit, Activity, BarChart3, Send, Check } from "lucide-react"; 
+
+// // Import State Management & API
+// import { useDashboardStore } from '@/store/useDashboardStore';
+// // ADDED getQualitativeAnalysis to imports
+// import { getCharts, getRatios, getPerformance, getRiskMatrix, getQualitativeAnalysis } from '@/lib/api';
+// import QuantitativeChart from '@/components/ui/QuantitativeChart';
+
+// const companies = [
+//   "AAPL", "MSFT", "GOOGL", "AMZN",
+//   "META", "NVDA", "TSLA", "ORCL",
+//   "CRM", "NFLX", "ADBE"
+// ];
+
+// const ratioGroups = {
+//   "Valuation": ["Price-to-Earnings", "Price-to-Book", "EV-to-EBITDA", "EV-to-Sales", "Price-to-Free-Cash-Flow"],
+//   "Profitability": ["Gross Margin", "Operating Margin", "Net Profit Margin", "Return on Equity"],
+//   "Liquidity": ["Current Ratio", "Quick Ratio", "Cash Ratio"],
+//   "Efficiency": ["Asset Turnover Ratio", "Inventory Turnover Ratio"],
+//   "Leverage": ["Debt-to-Equity Ratio", "Debt-to-Assets Ratio"],
+//   "Cash Flow": ["Cash Conversion Efficiency", "CAPEX Coverage Ratio"]
+// };
+
+// const performanceMetrics = [
+//   "Beta", "CAPM", "Alpha", "Sharpe Ratio", "Sortino Ratio", 
+//   "Tracking Error", "Treynor Ratio"
+// ];
+
+
+// const years = ["2023", "2022", "2021", "2020"];
+// const periodYears = ["2024", "2025"];
+// const periodQuarters = ["Q1_2024", "Q2_2024", "Q3_2024", "Q1_2025", "Q2_2025", "Q3_2025"];
+// const periodQuartersQuant = ["Q1_2024", "Q2_2024", "Q3_2024","Q4_2024", "Q1_2025", "Q2_2025", "Q3_2025", "Q4_2025"];
+
+
+// type ExpandedWidget = "all" | "tabs" | "risk" | "metrics";
+
+// export default function Home() {
+//   // DESTRUCTURED NEW FIELDS FROM STORE
+//   const { 
+//     quantCompany, quantVariable, quantPeriod, setQuantFilter,
+//     qualCompany, qualQuarterYear, setQualFilter,
+//     qualQuery, qualResponse, isAnalyzing 
+//   } = useDashboardStore();
+  
+  
+//   const [selectedCategory, setSelectedCategory] = useState<keyof typeof ratioGroups>("Valuation");
+//   const [expandedWidget, setExpandedWidget] = useState<ExpandedWidget>("all");
+//   const [chatInput, setChatInput] = useState("");
+//   const [ragResponse, setRagResponse] = useState<any>(null);
+//   const [isSplitSynced, setIsSplitSynced] = useState(false);
+//   const [isGenerating, setIsGenerating] = useState(false);
+
+//   const [qualPeriodType, setQualPeriodType] = useState<"quarterly" | "yearly">("quarterly");
+//   const [riskPeriodType, setRiskPeriodType] = useState<"quarterly" | "yearly">("quarterly");
+  
+//   // NEW STATE: Chart Data and Loading
+//   const [chartData, setChartData] = useState<any[]>([]);
+//   const [isChartLoading, setIsChartLoading] = useState(false);
+//   // page.tsx (inside component, with other useState calls)
+//   const [ratioPeriod, setRatioPeriod] = useState<'Quarterly' | 'Yearly'>('Quarterly');
+
+//     // --- Data pulled from backend for Quantitative widgets ---
+//   const [ratioData, setRatioData] = useState<any[]>([]); // returned by /api/ratios: array of {metric, date1: val, ...}
+//   const [perfMap, setPerfMap] = useState<Record<string, number | null>>({}); // returned by /api/performance
+//   const [riskMatrix, setRiskMatrix] = useState<{metrics: string[]; tickers: string[]; matrix: (number | null)[][]}>({
+//     metrics: [], tickers: [], matrix: []
+//   });
+
+//   // inside your component in page.tsx — replace the existing effect that fetches ratios
+//   useEffect(() => {
+//     async function fetchCategoryRatios() {
+//       try {
+//         // ratioGroups[selectedCategory] should be an array of metric names.
+//         // Defensively coerce to array:
+//         const vars = Array.isArray(ratioGroups[selectedCategory]) ? ratioGroups[selectedCategory] : [];
+
+//         // timeframe expected by backend is lowercase ('quarterly'|'yearly')
+//         const timeframe = (ratioPeriod || "Quarterly").toLowerCase();
+
+//         // if no variables, still call backend (it will return everything or nothing depending on backend)
+//         const data = await getRatios(quantCompany, vars, timeframe);
+//         setRatioData(Array.isArray(data) ? data : []);
+//       } catch (err) {
+//         console.error("Failed fetching category ratios:", err);
+//         setRatioData([]);
+//       }
+//     }
+
+//     if (quantCompany && selectedCategory) {
+//       fetchCategoryRatios();
+//     }
+//   }, [quantCompany, selectedCategory, ratioPeriod, /* getRatios not in deps if defined outside */]);
+
+//   // fetch performance mapping for selected analysis period (qualQuarterYear)
+//   useEffect(() => {
+//     async function fetchPerf() {
+//       try {
+//         const data = await getPerformance(quantCompany, qualQuarterYear, riskPeriodType);
+//         setPerfMap(data || {});
+//       } catch (err) {
+//         console.error("Failed to fetch performance", err);
+//         setPerfMap({});
+//       }
+//     }
+//     if (quantCompany && qualQuarterYear) {
+//       fetchPerf();
+//     }
+//   }, [quantCompany, qualQuarterYear, riskPeriodType]);
+
+//   // fetch risk-matrix for selected analysis period
+//   useEffect(() => {
+//     async function fetchRisk() {
+//       try {
+//         const data = await getRiskMatrix(quantCompany, qualQuarterYear, riskPeriodType, 5);
+//         setRiskMatrix(data || { metrics: [], tickers: [], matrix: [] });
+//       } catch (err) {
+//         console.error("Failed to fetch risk matrix", err);
+//         setRiskMatrix({ metrics: [], tickers: [], matrix: [] });
+//       }
+//     }
+//     if (quantCompany && qualQuarterYear) {
+//       fetchRisk();
+//     }
+//   }, [quantCompany, qualQuarterYear, riskPeriodType, 5]);
+
+//   // --- THE REACTIVITY ENGINE (UPDATED FOR MULTI-SELECT) ---
+//   useEffect(() => {
+//     const fetchChartData = async () => {
+//       // Ensure quantVariable is treated as an array
+//       const variables = Array.isArray(quantVariable) ? quantVariable : [quantVariable];
+      
+//       if (variables.length === 0) return;
+
+//       setIsChartLoading(true);
+//       try {
+//         const data = await getCharts(quantCompany, quantPeriod, variables);
+//         setChartData(data);
+//       } catch (error) {
+//         console.error("Failed to load chart data:", error);
+//       } finally {
+//         setIsChartLoading(false);
+//       }
+//     };
+
+//     fetchChartData();
+//   }, [quantCompany, quantPeriod, quantVariable]);
+//   // -----------------------------
+
+//   const handleSyncSplit = () => {
+//     setIsSplitSynced(!isSplitSynced);
+//   };
+
+//   const submitChat = () => {
+//   if (chatInput.trim() !== "" && !isAnalyzing) {
+//     setQualFilter('isAnalyzing', true);
+    
+//     setTimeout(() => {
+//       setQualFilter('qualResponse', {
+//         text: "Mock response text...",
+//         faithfulness: 88,
+//         relevancy: 94
+//       });
+//       setChatInput("");
+//       setQualFilter('isAnalyzing', false);
+//     }, 1500);
+//   }
+// };
+
+//   const handleChatSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+//     if (e.key === "Enter") {
+//       submitChat();
+//     }
+//   };
+
+
+// // QUALITATIVE ANALYSIS HANDLER
+// const handleAIAnalysis = async () => {
+//   if (!qualQuery.trim() || isAnalyzing) return;
+
+//   setQualFilter('isAnalyzing', true);
+//   try {
+//     const data = await getQualitativeAnalysis(
+//       qualCompany, 
+//       qualQuarterYear, 
+//       qualQuery
+//     );
+    
+//     // FIX: Match the nested audit_score keys from Python
+//     setQualFilter('qualResponse', {
+//       text: data.final_response,
+//       faithfulness: data.audit_score.faithfulness,     // data.audit_score.faithfulness
+//       relevancy: data.audit_score.answer_relevancy     // data.audit_score.answer_relevancy
+//     });
+
+//     setQualFilter('qualQuery', "");
+//   } catch (error) {
+//     console.error("AI Analysis failed", error);
+//   } finally {
+//     setQualFilter('isAnalyzing', false);
+//   }
+// };
+
+//   // Helper for multi-select logic
+//   const toggleVariable = (v: string) => {
+//     const current = Array.isArray(quantVariable) ? quantVariable : [quantVariable];
+//     const next = current.includes(v) 
+//       ? current.filter(item => item !== v) 
+//       : [...current, v];
+//     setQuantFilter('quantVariable', next as any);
+//   };
+
+//   return (
+//     <div className="h-screen w-full flex flex-col bg-slate-950 text-slate-50 overflow-hidden font-sans">
+//       <div className="flex-1 p-3 min-h-0 overflow-hidden">
+//         <ResizablePanelGroup direction="horizontal" className="h-full min-h-0 rounded-xl border border-slate-800 bg-slate-900/10">
+
+//           {/* LEFT PANEL: QUALITATIVE ANALYSIS */}
+//             {/* LEFT PANEL: QUALITATIVE ANALYSIS */}
+//             <ResizablePanel defaultSize={isSplitSynced ? 100 : 45} minSize={30}>
+//               <div className="h-full p-4 flex flex-col gap-4"> {/* removed overflow-hidden */}
+
+//                 {/* 1. Header & Context Filters - Preserved */}
+//                 <div className="flex items-center justify-between shrink-0">
+//                   <div className="flex items-center gap-3">
+//                     <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Qualitative Analysis</h2>
+//                     <BrainCircuit size={14} className="text-blue-500 opacity-50" />
+//                   </div>
+
+//                   <Button
+//                     onClick={handleSyncSplit}
+//                     size="sm"
+//                     variant="outline"
+//                     className={`h-7 text-[10px] border-slate-800 uppercase tracking-wider transition-all ${isSplitSynced ? 'bg-slate-800 text-blue-400 border-blue-900/50 px-4' : ''}`}
+//                   >
+//                     {isSplitSynced ? "Enable Quantitative Analysis" : "Sync Split-Screen"}
+//                   </Button>
+//                 </div>
+
+//                 <div className="grid grid-cols-3 gap-2 shrink-0">
+//                   <div className="flex flex-col gap-1">
+//                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Company</label>
+//                     <select value={qualCompany} onChange={(e) => setQualFilter('qualCompany', e.target.value)} className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded px-2 py-2 outline-none h-9">
+//                       {companies.map(c => <option key={c} value={c}>{c}</option>)}
+//                     </select>
+//                   </div>
+
+//                   <div className="flex flex-col gap-1">
+//                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Type</label>
+//                     <div className="flex bg-slate-900 border border-slate-800 rounded p-0.5 h-9">
+//                       <button onClick={() => setQualPeriodType("quarterly")} className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'quarterly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}>Quarterly</button>
+//                       <button onClick={() => setQualPeriodType("yearly")} className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'yearly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}>Yearly</button>
+//                     </div>
+//                   </div>
+
+//                   <div className="flex flex-col gap-1">
+//                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Period</label>
+//                     <select value={qualQuarterYear} onChange={(e) => setQualFilter('qualQuarterYear', e.target.value)} className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded px-2 py-2 outline-none h-9 cursor-pointer">
+//                       {(qualPeriodType === "quarterly" ? periodQuarters : periodYears).map((p) => (
+//                         <option key={p} value={p}>{p}</option>
+//                       ))}
+//                     </select>
+//                   </div>
+//                 </div>
+
+//                 {/* 2. Main Content Area - FIXED SCROLLING & DISAPPEARING QUERY */}
+//                 <div className="flex-1 min-h-0 flex flex-col gap-3">
+
+//                   {/* Make this container actually scrollable */}
+//                   <ScrollArea className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-800 bg-slate-950/40">
+//                     <div className="p-4 space-y-4 pr-3"> {/* small right padding so scrollbar doesn't overlap content */}
+
+//                       {/* USER QUERY BUBBLE: Shows what you asked */}
+//                       {qualResponse && (
+//                         <div className="flex justify-end">
+//                           <div className="max-w-[80%] bg-blue-600/20 border border-blue-500/30 rounded-2xl rounded-tr-none px-4 py-2 text-xs text-blue-100 italic whitespace-pre-wrap break-words">
+//                             {qualQuery || `Analysis request for ${qualCompany}`}
+//                           </div>
+//                         </div>
+//                       )}
+
+//                       {/* AI RESPONSE */}
+//                       <div className="flex flex-col gap-2">
+//                         {isAnalyzing ? (
+//                           <div className="flex items-center gap-2 text-sm text-slate-500 animate-pulse italic">
+//                             <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce" />
+//                             Crunching SEC filings...
+//                           </div>
+//                         ) : !qualResponse ? (
+//                           <div className="text-sm text-slate-500 italic text-center py-20">Waiting for query...</div>
+//                         ) : (
+//                           <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words font-sans selection:bg-blue-500/30">
+//                             {qualResponse.text}
+//                           </div>
+//                         )}
+//                       </div>
+
+//                     </div>
+//                   </ScrollArea>
+
+//                   {/* 3. DeepEval Scores - will remain visible (shrink-0) */}
+//                   <div className="shrink-0 bg-slate-900/50 border border-slate-800 rounded-xl p-4 z-10">
+//                     <h3 className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+//                       <BarChart3 size={12} className="text-blue-500" /> DeepEval Scores
+//                     </h3>
+
+//                     <div className="grid grid-cols-2 gap-4">
+//                       <div>
+//                         <div className="flex justify-between text-[10px] mb-1.5 uppercase">
+//                           <span className="text-slate-400">Faithfulness</span>
+//                           <span className={`font-mono transition-colors ${isAnalyzing ? 'text-slate-600' : 'text-blue-400'}`}>
+//                             {qualResponse ? Math.round(qualResponse.faithfulness) : 0}%
+//                           </span>
+//                         </div>
+//                         <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+//                           <div className={`h-full transition-all duration-1000 ${isAnalyzing ? 'bg-slate-700 animate-pulse' : 'bg-blue-500'}`}
+//                               style={{ width: `${qualResponse?.faithfulness || 0}%` }} />
+//                         </div>
+//                       </div>
+
+//                       <div>
+//                         <div className="flex justify-between text-[10px] mb-1.5 uppercase">
+//                           <span className="text-slate-400">Relevancy</span>
+//                           <span className={`font-mono transition-colors ${isAnalyzing ? 'text-slate-600' : 'text-indigo-400'}`}>
+//                             {qualResponse ? Math.round(qualResponse.relevancy) : 0}%
+//                           </span>
+//                         </div>
+//                         <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+//                           <div className={`h-full transition-all duration-1000 ${isAnalyzing ? 'bg-slate-700 animate-pulse' : 'bg-indigo-500'}`}
+//                               style={{ width: `${qualResponse?.relevancy || 0}%` }} />
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </div>
+
+//                 </div>
+
+//                 {/* 4. Chat Input Area */}
+//                 <div className="relative flex items-center w-full shrink-0">
+//                   <input
+//                     type="text"
+//                     value={qualQuery}
+//                     onChange={(e) => setQualFilter('qualQuery', e.target.value)}
+//                     onKeyDown={(e) => e.key === "Enter" && handleAIAnalysis()}
+//                     disabled={isAnalyzing}
+//                     placeholder={isAnalyzing ? "Generating response..." : `Ask about ${qualCompany}...`}
+//                     className="w-full bg-slate-900 border border-slate-800 rounded-lg py-3 pl-4 pr-12 text-sm text-slate-200 outline-none focus:border-blue-500/50 transition-all disabled:opacity-50"
+//                   />
+//                   <Button
+//                     onClick={handleAIAnalysis}
+//                     disabled={isAnalyzing || qualQuery.trim() === ""}
+//                     size="icon"
+//                     className="absolute right-2 h-8 w-8 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-all disabled:opacity-50"
+//                   >
+//                     {isAnalyzing ? (
+//                       <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+//                     ) : (
+//                       <Send size={14} />
+//                     )}
+//                   </Button>
+//                 </div>
+
+//               </div>
+//             </ResizablePanel>
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -72,12 +449,24 @@ export default function Home() {
   // page.tsx (inside component, with other useState calls)
   const [ratioPeriod, setRatioPeriod] = useState<'Quarterly' | 'Yearly'>('Quarterly');
 
+  // store the last *sent* query so the UI can show it even if the input is cleared
+  const [lastQuery, setLastQuery] = useState<string>("");
+
     // --- Data pulled from backend for Quantitative widgets ---
   const [ratioData, setRatioData] = useState<any[]>([]); // returned by /api/ratios: array of {metric, date1: val, ...}
   const [perfMap, setPerfMap] = useState<Record<string, number | null>>({}); // returned by /api/performance
-  const [riskMatrix, setRiskMatrix] = useState<{metrics: string[]; tickers: string[]; matrix: (number | null)[][]}>({
+  const [riskMatrix, setRiskMatrix] = useState<{metrics: string[]; tickers: string[]; matrix: (number | null)[][]}>( {
     metrics: [], tickers: [], matrix: []
   });
+
+  // --- helper: normalize any incoming score into 0..100 integer percent ---
+  const toPercent = (v: any): number => {
+    if (v == null) return 0;
+    const n = Number(v);
+    if (Number.isNaN(n)) return 0;
+    // if backend returns 0..1 => multiply, otherwise assume 0..100 already
+    return n <= 1 ? Math.round(n * 100) : Math.round(n);
+  };
 
   // inside your component in page.tsx — replace the existing effect that fetches ratios
   useEffect(() => {
@@ -164,17 +553,17 @@ export default function Home() {
   };
 
   const submitChat = () => {
-    if (chatInput.trim() !== "" && !isGenerating) {
-      setIsGenerating(true);
+    if (chatInput.trim() !== "" && !isAnalyzing) {
+      setQualFilter('isAnalyzing', true);
       
       setTimeout(() => {
-        setRagResponse({
-          text: `Analysis for ${qualCompany} suggests strong liquidity positions in ${qualQuarterYear}, though R&D spending remains a primary focal point for margin compression.`,
+        setQualFilter('qualResponse', {
+          text: "Mock response text...",
           faithfulness: 88,
           relevancy: 94
         });
         setChatInput("");
-        setIsGenerating(false);
+        setQualFilter('isAnalyzing', false);
       }, 1500);
     }
   };
@@ -185,25 +574,43 @@ export default function Home() {
     }
   };
 
-
-// QUALITATIVE ANALYSIS HANDLER
+  // QUALITATIVE ANALYSIS HANDLER (UPDATED: preserve sent query & normalize scores)
   const handleAIAnalysis = async () => {
-    if (!qualQuery.trim() || isAnalyzing) return;
+    const userQuery = (qualQuery || "").trim();
+    if (!userQuery || isAnalyzing) return;
 
+    // persist that we're analyzing in the store
     setQualFilter('isAnalyzing', true);
+
+    // store the last sent query locally so UI can show it even if qualQuery is cleared
+    setLastQuery(userQuery);
+
     try {
       const data = await getQualitativeAnalysis(
         qualCompany, 
         qualQuarterYear, 
-        qualQuery
+        userQuery
       );
-      
+
+      // defensive extraction of text and score fields (backend shape may vary)
+      const text = data?.final_response ?? data?.text ?? data?.summary ?? data?.answer ?? "";
+      const rawFaith = data?.audit_score?.faithfulness ?? data?.faithfulness ?? data?.scores?.faithfulness ?? data?.metrics?.faith ?? 0;
+      const rawRel  = data?.audit_score?.answer_relevancy ?? data?.relevancy ?? data?.scores?.relevancy ?? data?.metrics?.relev ?? 0;
+
+      // normalize them into 0..100 integers
+      const faithPercent = toPercent(rawFaith);
+      const relevancyPercent = toPercent(rawRel);
+
+      // set the response into the store; include the query that produced this response
       setQualFilter('qualResponse', {
-        text: data.final_response,
-        faithfulness: data.faithfulness,
-        relevancy: data.relevancy
+        text,
+        faithfulness: faithPercent,
+        relevancy: relevancyPercent,
+        query: userQuery,
+        raw: data
       });
-      // Clear the input after success
+
+      // clear the input field (we already saved lastQuery)
       setQualFilter('qualQuery', "");
     } catch (error) {
       console.error("AI Analysis failed", error);
@@ -228,19 +635,25 @@ export default function Home() {
 
           {/* LEFT PANEL: QUALITATIVE ANALYSIS */}
             <ResizablePanel defaultSize={isSplitSynced ? 100 : 45} minSize={30}>
-              <div className="h-full p-4 flex flex-col gap-4">
-                {/* Header - preserved exactly */}
+              <div className="h-full p-4 flex flex-col gap-4"> {/* removed overflow-hidden */}
+
+                {/* 1. Header & Context Filters - Preserved */}
                 <div className="flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Qualitative Analysis</h2>
                     <BrainCircuit size={14} className="text-blue-500 opacity-50" />
                   </div>
-                  <Button onClick={handleSyncSplit} size="sm" variant="outline" className={`h-7 text-[10px] border-slate-800 uppercase tracking-wider transition-all ${isSplitSynced ? 'bg-slate-800 text-blue-400 border-blue-900/50 px-4' : ''}`}>
+
+                  <Button
+                    onClick={handleSyncSplit}
+                    size="sm"
+                    variant="outline"
+                    className={`h-7 text-[10px] border-slate-800 uppercase tracking-wider transition-all ${isSplitSynced ? 'bg-slate-800 text-blue-400 border-blue-900/50 px-4' : ''}`}
+                  >
                     {isSplitSynced ? "Enable Quantitative Analysis" : "Sync Split-Screen"}
                   </Button>
                 </div>
 
-                {/* Context Filters - preserved exactly */}
                 <div className="grid grid-cols-3 gap-2 shrink-0">
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Company</label>
@@ -248,102 +661,110 @@ export default function Home() {
                       {companies.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
+
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Type</label>
                     <div className="flex bg-slate-900 border border-slate-800 rounded p-0.5 h-9">
-                      <button 
-                        onClick={() => setQualPeriodType("quarterly")} 
-                        className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'quarterly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}
-                      >
-                        Quarterly
-                      </button>
-                      <button 
-                        onClick={() => setQualPeriodType("yearly")} 
-                        className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'yearly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}
-                      >
-                        Yearly
-                      </button>
+                      <button onClick={() => setQualPeriodType("quarterly")} className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'quarterly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}>Quarterly</button>
+                      <button onClick={() => setQualPeriodType("yearly")} className={`flex-1 text-[8px] uppercase font-bold rounded transition-colors ${qualPeriodType === 'yearly' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}>Yearly</button>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Period</label>
-                    <select 
-                      value={qualQuarterYear} 
-                      onChange={(e) => setQualFilter('qualQuarterYear', e.target.value)} 
-                      className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded px-2 py-2 outline-none h-9 cursor-pointer"
-                    >
+                    <select value={qualQuarterYear} onChange={(e) => setQualFilter('qualQuarterYear', e.target.value)} className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded px-2 py-2 outline-none h-9 cursor-pointer">
                       {(qualPeriodType === "quarterly" ? periodQuarters : periodYears).map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
+                        <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
                   </div>
                 </div>
-                    
-                {/* Main Content Area - Layout preserved, logic updated to use qualResponse */}
+
+                {/* 2. Main Content Area - FIXED SCROLLING & DISAPPEARING QUERY */}
                 <div className="flex-1 min-h-0 flex flex-col gap-3">
-                  <ScrollArea className="flex-1 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-                    {isAnalyzing ? (
-                      <div className="text-sm text-slate-500 italic">Processing filings...</div>
-                    ) : !qualResponse ? (
-                      <div className="text-sm text-slate-500 italic">Waiting for query...</div>
-                    ) : (
-                      <div className="text-sm text-slate-300 leading-relaxed">{qualResponse.text}</div>
-                    )}
+
+                  {/* Make this container actually scrollable */}
+                  <ScrollArea className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-800 bg-slate-950/40">
+                    <div className="p-4 space-y-4 pr-3"> {/* small right padding so scrollbar doesn't overlap content */}
+
+                      {/* USER QUERY BUBBLE: Shows what you asked */}
+                      { (qualResponse || lastQuery || qualQuery) && (
+                        <div className="flex justify-end">
+                          <div className="max-w-[80%] bg-blue-600/20 border border-blue-500/30 rounded-2xl rounded-tr-none px-4 py-2 text-xs text-blue-100 italic whitespace-pre-wrap break-words">
+                            {/* prefer the query that produced the response, otherwise the last sent query, otherwise current input */}
+                            {qualResponse?.query || lastQuery || qualQuery || `Analysis request for ${qualCompany}`}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI RESPONSE */}
+                      <div className="flex flex-col gap-2">
+                        {isAnalyzing ? (
+                          <div className="flex items-center gap-2 text-sm text-slate-500 animate-pulse italic">
+                            <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce" />
+                            Crunching SEC filings...
+                          </div>
+                        ) : !qualResponse ? (
+                          <div className="text-sm text-slate-500 italic text-center py-20">Waiting for query...</div>
+                        ) : (
+                          <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words font-sans selection:bg-blue-500/30">
+                            {qualResponse.text}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
                   </ScrollArea>
 
-                  {/* DeepEval Scores Card - Restored exactly as per your "Current Code" */}
-                  <div className="shrink-0 bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                  {/* 3. DeepEval Scores - will remain visible (shrink-0) */}
+                  <div className="shrink-0 bg-slate-900/50 border border-slate-800 rounded-xl p-4 z-10">
                     <h3 className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
                       <BarChart3 size={12} className="text-blue-500" /> DeepEval Scores
                     </h3>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="flex justify-between text-[10px] mb-1.5 uppercase">
                           <span className="text-slate-400">Faithfulness</span>
-                          <span className="text-blue-400 font-mono">
-                            {qualResponse ? Math.round(qualResponse.faithfulness * 100) : 0}%
+                          <span className={`font-mono transition-colors ${isAnalyzing ? 'text-slate-600' : 'text-blue-400'}`}>
+                            {qualResponse ? Math.round(qualResponse.faithfulness) : 0}%
                           </span>
                         </div>
                         <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500 transition-all duration-500" 
-                            style={{ width: `${(qualResponse?.faithfulness || 0) * 100}%` }} 
-                          />
+                          <div className={`h-full transition-all duration-1000 ${isAnalyzing ? 'bg-slate-700 animate-pulse' : 'bg-blue-500'}`}
+                              style={{ width: `${qualResponse?.faithfulness || 0}%` }} />
                         </div>
                       </div>
+
                       <div>
                         <div className="flex justify-between text-[10px] mb-1.5 uppercase">
                           <span className="text-slate-400">Relevancy</span>
-                          <span className="text-indigo-400 font-mono">
-                            {qualResponse ? Math.round(qualResponse.relevancy * 100) : 0}%
+                          <span className={`font-mono transition-colors ${isAnalyzing ? 'text-slate-600' : 'text-indigo-400'}`}>
+                            {qualResponse ? Math.round(qualResponse.relevancy) : 0}%
                           </span>
                         </div>
                         <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-indigo-500 transition-all duration-500" 
-                            style={{ width: `${(qualResponse?.relevancy || 0) * 100}%` }} 
-                          />
+                          <div className={`h-full transition-all duration-1000 ${isAnalyzing ? 'bg-slate-700 animate-pulse' : 'bg-indigo-500'}`}
+                              style={{ width: `${qualResponse?.relevancy || 0}%` }} />
                         </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
 
-                {/* Chat Input Area - Layout preserved, updated with store variables */}
+                {/* 4. Chat Input Area */}
                 <div className="relative flex items-center w-full shrink-0">
-                  <input 
-                    type="text" 
-                    value={qualQuery} 
-                    onChange={(e) => setQualFilter('qualQuery', e.target.value)} 
+                  <input
+                    type="text"
+                    value={qualQuery}
+                    onChange={(e) => setQualFilter('qualQuery', e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAIAnalysis()}
                     disabled={isAnalyzing}
                     placeholder={isAnalyzing ? "Generating response..." : `Ask about ${qualCompany}...`}
                     className="w-full bg-slate-900 border border-slate-800 rounded-lg py-3 pl-4 pr-12 text-sm text-slate-200 outline-none focus:border-blue-500/50 transition-all disabled:opacity-50"
                   />
-                  <Button 
+                  <Button
                     onClick={handleAIAnalysis}
                     disabled={isAnalyzing || qualQuery.trim() === ""}
                     size="icon"
@@ -356,6 +777,7 @@ export default function Home() {
                     )}
                   </Button>
                 </div>
+
               </div>
             </ResizablePanel>
 

@@ -50,6 +50,7 @@ def retrieve_simple(
     """Retrieves SEC and Transcript data for a single query context."""
     logger.info(f"Executing simple retrieval for: {original_query[:50]}...")
 
+    print(f"These are the Sub Queries {sub_queries}")
     # SEC Retrieval
     sec_result = retriever(
         driver=driver,
@@ -61,6 +62,7 @@ def retrieve_simple(
         query_embedding=query_embedding
     )
 
+    
     # Transcript Retrieval
     trans_data = _process_transcripts(
         driver, original_query, sub_queries[0]['company'], sub_queries[0]['periods']

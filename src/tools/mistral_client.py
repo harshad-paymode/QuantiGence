@@ -15,7 +15,7 @@ logger = configure_logging(logging.INFO)
 class MistralClient:
     """Wrapper for Mistral API calls with tool use"""
     
-    def __init__(self, api_key: str = os.getenv("MISTRAL_API_KEY")):
+    def __init__(self, api_key: str = os.getenv("MISTRAL_API")):
         self.client = Mistral(api_key=api_key)
     
     def call_with_tool(
@@ -24,7 +24,7 @@ class MistralClient:
         system_prompt: str,
         user_message: str,
         tools: List[Dict[str, Any]],
-        tool_function_name: str,
+        tool_choice: str,
         temperature: float = 0.0,
         max_tokens: int = 300
     ) -> Dict[str, Any]:
@@ -51,23 +51,12 @@ class MistralClient:
                     {"role": "user", "content": user_message},
                 ],
                 tools=tools,
-                tool_choice={"type": "function", "function": {"name": tool_function_name}},
+                tool_choice=tool_choice,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
             
-            msg = response.choices[0].message
-            tool_calls = getattr(msg, "tool_calls", None)
-            
-            if not tool_calls:
-                logger.warning(f"No tool calls in response for {tool_function_name}")
-                return {}
-            
-            args = tool_calls[0].function.arguments
-            if isinstance(args, str):
-                args = json.loads(args)
-            
-            return args
+            return response.choices[0].message
             
         except Exception as e:
             logger.error(f"Error calling Mistral: {str(e)}")

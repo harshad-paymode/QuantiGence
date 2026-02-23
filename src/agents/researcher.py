@@ -1,20 +1,21 @@
 """Researcher agent for query processing and retrieval."""
 
-import logging
+from src.core.logger import configure_logging
 from typing import Dict, Any, Literal
 from copy import deepcopy
+from typing import Any, Dict, List
 from sklearn.metrics.pairwise import cosine_similarity
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage
-from agents.base_agent import BaseAgent
 from core.state import QueryResState
 from services.query_processor import query_processor
-
-from retrieval.neo4j_retriever import connect_neo4j, get_query_embeddings
+from retrieval.neo4j_retriever import get_query_embeddings
+from src.core.database import  connect_neo4j
 from services.retrieval_service import retrieve_simple, retrieve_multi_query, retrieve_change_detection
 from services.memory import load_conversation_memory
+from src.retrieval.retrieval_helpers import build_retrieval_jobs
 
-logger = logging.getLogger(__name__)
+logger = configure_logging()
 
 # Constants
 SIM_THRESHOLD = 0.70
@@ -59,7 +60,7 @@ def metadata_match_score(current_meta: dict, previous_meta: dict) -> float:
     return overlap
 
 
-def parse_query_node(state: QueryResState) -> Dict[str, Any]:
+def parse_query_node(state: QueryResState) -> QueryResState:
     """Parse the user query into structured components."""
     return {
         "parsed_query": query_processor.parse_query(state["last_user_message"]),
@@ -67,7 +68,7 @@ def parse_query_node(state: QueryResState) -> Dict[str, Any]:
     }
 
 
-def decide_query_refinement(state: QueryResState) -> Dict[str, Any]:
+def decide_query_refinement(state: QueryResState) -> QueryResState:
     """Decide if query needs refinement based on parsed components."""
     parsed = state.get("parsed_query", {})
     needs_company = not parsed.get("companies")
@@ -79,7 +80,7 @@ def decide_query_refinement(state: QueryResState) -> Dict[str, Any]:
     }
 
 
-def refine_query(state: QueryResState) -> Dict[str, Any]:
+def refine_query(state: QueryResState) -> QueryResState:
     """Refine query using conversation history."""
     refined = query_processor.normalize_query_with_history(
         state["last_user_message"],
@@ -101,7 +102,7 @@ def refine_query(state: QueryResState) -> Dict[str, Any]:
     }
 
 
-def processor_query(state: QueryResState) -> Dict[str, Any]:
+def processor_query(state: QueryResState) -> QueryResState:
     """Process query to determine type and decompose into sub-queries."""
     user_query = state.get("modif_query") if state["query_modified"] else state["last_user_message"]
     
@@ -111,7 +112,7 @@ def processor_query(state: QueryResState) -> Dict[str, Any]:
     classification = query_processor.classify_query(user_query)
     query_type = classification["query_type"]
     
-    sub_queries = query_processor.decompose_query(user_query, query_type)
+    sub_queries = build_retrieval_jobs(user_query, query_type)
     
     return {
         "query_classification": query_type,
@@ -120,7 +121,7 @@ def processor_query(state: QueryResState) -> Dict[str, Any]:
     }
 
 
-def decide_context_reuse(state: QueryResState) -> Dict[str, Any]:
+def decide_context_reuse(state: QueryResState) -> QueryResState:
     """
     Decide whether to reuse previously retrieved context
     instead of running retrieval again.
@@ -143,8 +144,10 @@ def decide_context_reuse(state: QueryResState) -> Dict[str, Any]:
 
         if not prev_meta or prev_embedding is None:
             continue
-
-        sim_score = cosine_similarity([current_embedding], [prev_embedding])[0][0]
+        
+        if prev_embedding:
+            sim_score = cosine_similarity([current_embedding], [prev_embedding])[0][0]
+        
         meta_score = metadata_match_score(current_meta, prev_meta)
 
         if sim_score >= SIM_THRESHOLD and meta_score >= SECTION_OVERLAP_THRESHOLD:
@@ -163,7 +166,7 @@ def decide_context_reuse(state: QueryResState) -> Dict[str, Any]:
     return {"reuse_context": False}
 
 
-def retrieval_controller_node(state: QueryResState) -> Dict[str, Any]:
+def retrieval_controller_node(state: QueryResState) -> QueryResState:
     """Execute retrieval based on query type."""
     original_query = state.get("modif_query") or state["org_query"]
     query_type = state["query_classification"]
@@ -241,7 +244,7 @@ def retrieval_controller_node(state: QueryResState) -> Dict[str, Any]:
     return result
 
 
-def evaluate_context(state: QueryResState) -> Dict[str, Any]:
+def evaluate_context(state: QueryResState) -> QueryResState:
     """Evaluate if retrieved context is sufficient."""
     sec_chunks = state.get("sec_context", [])
     sufficient = len(sec_chunks) >= 1
@@ -303,59 +306,55 @@ def _build_researcher_subgraph() -> StateGraph:
 # Compile the researcher subgraph
 _researcher_subgraph = _build_researcher_subgraph().compile()
 
-class ResearcherAgent(BaseAgent):
 
+def researcher_node(state: QueryResState) -> QueryResState:
     """
-    Researcher Agent is designed to handlle query and
-    Retrieval, First it checks the query parses it 
-    classify, modify, source_classification. Then it
-    retrieves based on the query is new or follow up of
-    previous query, prepares and pass the context and query 
-    to Analyst.
+    Researcher node: loads conversation memory and invokes a researcher subgraph/executor.
     """
+    logger.debug("RESEARCHER: starting researcher_node for conversation_id=%s", state.get("conversation_id"))
 
-    def __init__(self):
-        super().__init__("Analyst")
+    conversation_id = state.get("conversation_id")
+    conversation_memory: List[Dict[str, Any]] = load_conversation_memory(conversation_id) or []
+    logger.debug("RESEARCHER: loaded conversation_memory length=%d", len(conversation_memory))
+    state["conversation_memory"] = conversation_memory
 
-    def execute(self, state: QueryResState) -> Dict[str, Any]:
-        self._log_execution("INIT", f"Starting Query Processing and Retrieval Process")
+    # Run researcher subgraph / executor (assumed to return a dict of updates)
+    logger.debug("RESEARCHER: invoking researcher_executor")
+    updated = _researcher_subgraph.invoke(state) or {}
+    logger.debug("RESEARCHER: researcher_executor returned keys=%s", list(updated.keys()))
 
-        conversation_id = state["conversation_id"]
-        conversation_memory = load_conversation_memory(conversation_id)
+    exhausted = (
+        not updated.get("context_sufficient", False)
+        and updated.get("research_retry_count", 0) >= MAX_RETRIES
+    )
+    logger.debug("RESEARCHER: exhausted=%s", exhausted)
 
-        state["conversation_memory"] = conversation_memory
+    # find max turn id from conversation memory
+    max_turn_id = -1
+    for turn in conversation_memory:
+        tid = turn.get("turn_id", -1)
+        if tid > max_turn_id:
+            max_turn_id = tid
 
-        # Run researcher subgraph
-        updated = _researcher_subgraph.invoke(state)
+    logger.debug("RESEARCHER: max_turn_id=%d, next turn will be %d", max_turn_id, max_turn_id + 1)
 
-        exhausted = (
-            not updated.get("context_sufficient", False)
-            and updated.get("research_retry_count", 0) >= MAX_RETRIES
-        )
-
-        # Find max turn_id
-        max_turn_id = -1
-        for turn in conversation_memory:
-            if turn.get('turn_id', -1) > max_turn_id:
-                max_turn_id = turn['turn_id']
-
-        return {
-            "parsed_query": updated.get("parsed_query", state.get("parsed_query")),
-            "modif_query": updated.get("modif_query", state.get("org_query")),
-            "turn_id": max_turn_id + 1,
-            "query_classification": updated.get("query_classification", state.get("query_classification")),
-            "sub_queries": updated.get("sub_queries", state.get("sub_queries")),
-            "sec_context": updated.get("sec_context", []),
-            "trans_context": updated.get("trans_context", []),
-            "sec_graph_ui": updated.get("sec_graph_ui", []),
-            "transcript_graph_ui": updated.get("transcript_graph_ui", []),
-            "transcript_query": updated.get("transcript_query", ""),
-            "research_retry_count": updated.get("research_retry_count", 0),
-            "context_sufficient": updated.get("context_sufficient", False),
-            "query_embedding": updated.get("query_embedding", []),
-            "query_embedding_trans": updated.get("query_embedding_trans", []),
-            "data_source_classification": updated.get("data_source_classification", "SEC"),
-            "conversation_memory": updated.get("conversation_memory", []),
-            "reuse_context": updated.get("reuse_context", False),
-            "researcher_fail": exhausted,
-        }
+    return {
+        "parsed_query": updated.get("parsed_query", state.get("parsed_query")),
+        "modif_query": updated.get("modif_query", state.get("org_query")),
+        "turn_id": max_turn_id + 1,
+        "query_classification": updated.get("query_classification", state.get("query_classification")),
+        "sub_queries": updated.get("sub_queries", state.get("sub_queries")),
+        "sec_context": updated.get("sec_context", []),
+        "trans_context": updated.get("trans_context", []),
+        "sec_graph_ui": updated.get("sec_graph_ui", []),
+        "transcript_graph_ui": updated.get("transcript_graph_ui", []),
+        "transcript_query": updated.get("transcript_query"),
+        "research_retry_count": updated.get("research_retry_count", 0),
+        "context_sufficient": updated.get("context_sufficient", False),
+        "query_embedding": updated.get("query_embedding", []),
+        "query_embedding_trans": updated.get("query_embedding_trans", []),
+        "data_type": updated.get("data_type", "SEC"),
+        "conversation_memory": updated.get("conversation_memory", conversation_memory),
+        "reuse_context": updated.get("reuse_context", False),
+        "researcher_fail": exhausted,
+    }

@@ -56,7 +56,7 @@ class Evaluator:
             test_case = LLMTestCase(
                 input=query,
                 actual_output=output,
-                retrieval_context=[c.get('parent_text', '') for c in context]
+                retrieval_context= context
             )
             
             metrics = [

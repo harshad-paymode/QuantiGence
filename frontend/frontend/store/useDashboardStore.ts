@@ -27,11 +27,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   quantVariable: ['Close'],               // <- default as array
   quantRatioCategory: 'Valuation',
   qualCompany: 'AAPL',
-  qualQuarterYear: 'Q4_2023',
+  qualQuarterYear: 'Q3_2024',
   qualQuery: "",
   qualResponse: null,
   isAnalyzing: false,
   setQuantFilter: (key, value) => set({ [key]: value }),
   setQualFilter: (key, value) => set({ [key]: value }),
 }));
-

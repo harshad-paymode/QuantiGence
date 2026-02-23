@@ -32,6 +32,7 @@ def retriever(driver,cypher, query_text, index_name, top_k, query_params, query_
         "top_k": top_k,
         "index_name": index_name,
     })
+
     try:
         with driver.session(database=os.getenv("NEO4J_DATABASE", "neo4j")) as session:
             return session.run(cypher, params).data()

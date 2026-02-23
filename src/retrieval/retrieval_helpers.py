@@ -1,6 +1,6 @@
-import logging
 from typing import List, Dict, Any, Tuple, Set
 from src.core.logger import configure_logging
+from src.services.query_processor import query_processor
 
 logger = configure_logging()
 
@@ -13,6 +13,7 @@ def parse_record_content_and_graph_ui(
     """Parses and deduplicates raw Neo4j records into content and UI components."""
     logger.info(f"Parsing {len(record_items)} records with mode: {query_type}")
     
+    print(f"Show me the sec results")
     content_dict_list = []
     graph_ui_list = []
     seen_chunk_ids: Set[str] = set()
@@ -76,3 +77,68 @@ def build_transcript_context(transcript_chunks: List[Dict[str, Any]]) -> str:
         parts.append(entry)
 
     return "\n\n---\n\n".join(parts)
+
+def build_retrieval_jobs(user_query: str, query_type: str):
+    """
+    Returns list of retrieval jobs:
+    [
+       { "sub_q": "...sub query...",
+        "company": "Apple Inc.",
+        "periods": ["Q1 2024", ...],
+        "forms": ["10-Q", ...],
+        "headings": ["risk factors", ...]
+      }, ...
+    }]
+    """
+  
+
+    # always parse the original query (SIMPLE also)
+    base = query_processor.parse_query(user_query)
+
+    # decompose only if needed
+    if query_type in ["BROAD", "COMPARISON"]:
+        sub_queries = query_processor.decompose_query(user_query, query_type).get("sub_queries", []) or [user_query]
+    else:
+        sub_queries = [user_query]
+
+    # helper: periods from years+quarters
+    def make_periods(years, quarters):
+        if years and quarters:
+            return [f"{q}_{y}" for y in years for q in quarters]
+        if years:
+            return [f"FY_{str(y)}" for y in years]
+        return []
+
+    # global defaults from original parse
+    base_company = base["companies"][0]["name"] if base.get("companies") else None
+    base_periods = make_periods(base.get("years", []), base.get("quarters", []))
+    base_headings = base.get("section_hints", [])
+    base_forms = ["10-Q"] if base.get("filing_type_hint") == "10-Q" else ["10-K"] if base.get("filing_type_hint") == "10-K" else ["10-Q", "10-K"]
+
+    jobs = []
+    for sq in sub_queries:
+        # parse each subquery to bind filters correctly
+        p = query_processor.parse_query(sq)
+
+        company = p["companies"][0]["name"] if p.get("companies") else base_company
+        periods = make_periods(p.get("years", []), p.get("quarters", [])) or base_periods
+        headings = p.get("section_hints", []) or base_headings
+
+        if p.get("filing_type_hint") == "10-Q":
+            forms = ["10-Q"]
+        elif p.get("filing_type_hint") == "10-K":
+            forms = ["10-K"]
+        else:
+            forms = base_forms
+
+        jobs.append(
+            {
+                "q": sq,
+                "company": company,
+                "periods": periods,
+                "forms": forms,
+                "headings": headings,
+            }
+        )
+    
+    return jobs

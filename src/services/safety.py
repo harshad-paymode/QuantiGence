@@ -1,5 +1,6 @@
 """Safety and content filtering services"""
 import logging
+import json
 from typing import Dict, Any
 from prompts.auditor_prompts import (
     INPUT_OUTPUT_POLICY,
@@ -24,38 +25,45 @@ logger = configure_logging(logging.INFO)
 class SafetyChecker:
     """Content safety and filtering"""
     
-    def __init__(self, safety_model: str = os.getenv("MISTRAL_SAFETY_MODEL")):
+    def __init__(self, safety_model: str = os.getenv("MISTRAL_SAFETY")):
         self.safety_model = safety_model
     
     def check_harm(self, text: str) -> Dict[str, Any]:
         """Check if text contains harmful content"""
-        return mistral_client.call_with_tool(
+        print(self.safety_model)
+        msg = mistral_client.call_with_tool(
             model=self.safety_model,
             system_prompt=INPUT_OUTPUT_POLICY,
             user_message=f"query/response:\n{text}",
             tools=[{"type": "function", "function": INPUT_OUTPUT_POLICY_FN}],
-            tool_function_name="classify_harm"
+            tool_choice = "any"
         )
+    
+        return json.loads((msg.tool_calls[0].function.arguments))
     
     def filter_input(self, user_input: str) -> Dict[str, Any]:
         """Filter and classify user input"""
-        return mistral_client.call_with_tool(
+        msg = mistral_client.call_with_tool(
             model=self.safety_model,
             system_prompt=INPUT_FILTER_PROMPT,
             user_message=f"query/response:\n{user_input}",
             tools=[{"type": "function", "function": INPUT_FILTER_FN}],
-            tool_function_name="route_user_input"
+            tool_choice = "any"
         )
+
+        return json.loads((msg.tool_calls[0].function.arguments))
     
     def filter_output(self, bot_response: str) -> Dict[str, Any]:
         """Filter and check bot output for financial advice"""
-        return mistral_client.call_with_tool(
+        msg = mistral_client.call_with_tool(
             model=self.safety_model,
             system_prompt=OUTPUT_FILTER_PROMPT,
             user_message=f"query/response:\n{bot_response}",
             tools=[{"type": "function", "function": OUTPUT_FILTER_FN}],
-            tool_function_name="check_financial_advice"
+            tool_choice = "any"
         )
+
+        return json.loads((msg.tool_calls[0].function.arguments))
 
 # Global instance
 safety_checker = SafetyChecker()
