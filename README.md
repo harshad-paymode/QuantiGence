@@ -1,7 +1,37 @@
+## Table of Contents
+
+- [Vision & Summary](#vision--summary)  
+- [Highlights & Strengths](#highlights--strengths)  
+- [Project Scope (Why it’s “grand”)](#project-scope-why-its-grand)  
+- [High-level Architecture](#high-level-architecture)  
+- [Knowledge Graph — design & schema](#knowledge-graph---design--schema)  
+  - [Core Nodes](#core-nodes)  
+  - [Core Relationships](#core-relationships)  
+- [Core Pipeline (Supervisor → Auditor → Researcher → Analyst)](#core-pipeline-supervisor----auditor----researcher----analyst)  
+  - [Supervisor](#supervisor)  
+  - [Researcher](#researcher)  
+  - [Auditor](#auditor)  
+  - [Analyst](#analyst)  
+- [Context reuse & multi-turn memory](#context-reuse--multi-turn-memory)  
+- [Persistence & DB choices (Cosmos DB, Redis, Neo4j, parquet)](#persistence--db-choices-cosmos-db-redis-neo4j-parquet)  
+- [Prompts & Grounding policy (examples)](#prompts--grounding-policy-examples)  
+- [Safety & Evaluation (Auditor + DeepEval)](#safety--evaluation-auditor--deepeval)  
+- [Quickstart (dev)](#quickstart-dev)  
+- [Future work / Roadmap](#future-work--roadmap)  
+- [Contributing & testing](#contributing--testing)  
+- [License](#license)  
+- [Disclaimer](#disclaimer)
+
+
 # QuantiGence
 
 > Hybrid Financial Intelligence Platform  
 > Quantitative analytics × Knowledge Graph × LLM-powered qualitative reasoning × Evaluation-first design
+
+## Demo
+
+https://github.com/user-attachments/assets/1d0f6cd1-684b-4f2f-ac83-ee51424f25d8
+
 
 ## Vision & Summary
 
