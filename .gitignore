@@ -14,7 +14,7 @@ sec-edgar-filings
 *.parquet()
 /*.py
 # 2. But do NOT ignore these specific two
-!/app.py
+!/tasks.py
 !/main.py
 /*.txt
 /*.xlsx
