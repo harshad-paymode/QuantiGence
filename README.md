@@ -28,7 +28,7 @@ QuantiGence is built for researchers, analysts, and engineers who want transpare
 - **Task-Oriented Orchestration** — Supervisor-driven role separation
 - **Scalable Data Model** — parquet-based analytics + graph-based reasoning
 
-## Project Scope (Why it’s “grand”)
+## Project Scope
 
 QuantiGence is not a dashboard.
 
@@ -73,22 +73,6 @@ QuantiGence is built for researchers, analysts, and engineers who want transpare
 - **Evaluation-Driven Outputs** — built-in DeepEval scoring
 - **Task-Oriented Orchestration** — Supervisor-driven role separation
 - **Scalable Data Model** — parquet-based analytics + graph-based reasoning
-
-## Project Scope (Why it’s “grand”)
-
-QuantiGence is not a dashboard.
-
-It is a modular financial intelligence system that:
-
-- Ingests structured financial time-series data
-- Parses and indexes SEC filings
-- Builds entity relationships in a Knowledge Graph
-- Runs orchestrated LLM pipelines
-- Audits model outputs for hallucinations
-- Scores responses for quality and grounding
-- Supports multi-turn analytical sessions
-
-It integrates data engineering, retrieval systems, orchestration logic, evaluation tooling, and user-facing analytics in one cohesive architecture.
 
 ## High-level Architecture
 Data Sources
