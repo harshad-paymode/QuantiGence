@@ -12,7 +12,6 @@
   - [Researcher](#researcher)  
   - [Auditor](#auditor)  
   - [Analyst](#analyst)  
-- [Context reuse & multi-turn memory](#context-reuse--multi-turn-memory)  
 - [Persistence & DB choices (Cosmos DB, Redis, Neo4j, parquet)](#persistence--db-choices-cosmos-db-redis-neo4j-parquet)  
 - [Prompts & Grounding policy (examples)](#prompts--grounding-policy-examples)  
 - [Safety & Evaluation (Auditor + DeepEval)](#safety--evaluation-auditor--deepeval)  
@@ -106,18 +105,17 @@ QuantiGence models financial intelligence as an entity network.
 
 - **Company**
 - **Filing**
-- **Section**
-- **Metric**
-- **Event**
-- **Person**
+- **Heading**
+- **Parent Chunk**
+- **Child Chunk**
 
 ### Core Relationships
 
-- Company → HAS_FILING → Filing
-- Filing → CONTAINS → Section
-- Company → REPORTED_METRIC → Metric
-- Company → EXPERIENCED → Event
-- Person → HELD_ROLE_AT → Company
+- Company → FILED → Filing
+- Filing → HAS_SECTION → Heading
+- Heading → HAS_CONTENT → ParentChunk
+- ParentChunk → HAS_CHILD → ChildChunk
+- Filing → NEXT → Filing #Between different quarters and years (temporal relationship) 
 
 ### Why It Matters
 
@@ -127,26 +125,6 @@ QuantiGence models financial intelligence as an entity network.
 - Provides grounding context for LLM responses
 
 The Knowledge Graph transforms documents into structured intelligence.
-
-## Context reuse & multi-turn memory
-
-QuantiGence supports structured analytical workflows.
-
-### Short-term Memory
-- Session-based conversation context
-- Recent queries and outputs
-
-### Long-term Memory
-- Persisted preferences
-- Prior validated findings
-- Watchlists and tracked entities
-
-### Intelligent Context Selection
-- Recency-based prioritization
-- Relevance-based filtering
-- Controlled context window growth
-
-This enables consistent multi-turn research sessions without context drift.
 
 ## Persistence & DB choices (Cosmos DB, Redis, Neo4j, parquet)
 
@@ -167,6 +145,7 @@ QuantiGence uses polyglot persistence.
 - Knowledge Graph storage
 - Multi-hop entity traversal
 - Relationship-based reasoning
+- Temporal relationships between filings and transcripts
 
 ### Cosmos DB
 - Flexible metadata storage
@@ -255,6 +234,23 @@ celery -A tasks worker --loglevel=info
 ```
 
 7. Start frontend
+   
+```bash
+#Navigate to frontend foder
+cd frontend
+
+#Install UI Components and Icons
+npm install react-resizable-panels lucide-react
+npx shadcn@latest init
+npx shadcn@latest add card table tabs button scroll-area
+
+#Register the Resizable Component
+npx shadcn@latest add resizable
+
+#Install Zustand and react-query
+npm install zustand @tanstack/react-query recharts lightweight-charts
+```
+
 
 ```bash
 #Start frontend in a separate terminal
@@ -271,12 +267,9 @@ The above setup is given for Windows Operating system using Command Prompt.
 Planned expansions:
 
 - Expand Knowledge Graph node types and relationships
-- Introduce temporal relationship modeling
 - Detect recurring financial patterns using graph motifs
 - Add anomaly detection on reporting trends
 - Incorporate human-in-the-loop correction loops
-- Improve audit trace exportability
-- Enable enterprise deployment modes
 
 The next major milestone is deepening the Knowledge Graph to support pattern discovery, cross-company inference, and structural event modeling.
 
@@ -291,11 +284,6 @@ Contributions are welcome.
 - Submit pull request
 - Include tests and documentation
 
-Testing philosophy:
-- Unit tests for data processing
-- Integration tests for retrieval
-- End-to-end evaluation tests for LLM pipeline
-- Reproducible evaluation metrics
 
 ## License
 
