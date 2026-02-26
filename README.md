@@ -70,10 +70,8 @@ QuantiGence is built for researchers, analysts, and engineers who want transpare
 - **Scalable Data Model** — parquet-based analytics + graph-based reasoning
 
 ## High-level Architecture
-
 - **Data Sources**  
-  Raw inputs: columnar market data (Parquet), full-text filings, and call transcripts. These are the authoritative inputs that feed both numeric analytics and LLM grounding.
-
+  Raw inputs: market data (Parquet) and Earnings call transcripts (downloaded through AlphaVantage and financetoolkit), full-text 10-K and 10-Q SEC filings (downloaded using egartools pypi package).
 - **Storage Layer**  
   A polyglot persistence approach:
   - *Parquet* for compact, fast time-series reads and analytics.
@@ -225,16 +223,51 @@ Each response includes evaluation scoring for transparency.
 - Optional: Neo4j instance
 
 ### High-Level Steps
+1.
+```bash
+#Clone the Repository Using
+https://github.com/harshad-paymode/QuantiGence.git
+```
+2.
+```bash
+#Install Poetry from PyPi
+pip install poetry==2.2.1
+```
+3.
+```bash
+#Install Poetry from PyPi
+pip install poetry==2.2.1
+```
+4.
+To install the defined dependencies for QuantiGence, just run
 
-1. Install dependencies
-2. Configure environment variables
-3. Start backend API
-4. Start task worker
-5. Start frontend
-6. Submit qualitative query
-7. View charts + AI response + evaluation scores
+```bash
+poetry install
+```
 
-If local resources are constrained, run backend services remotely and connect frontend via API base URL.
+5. Configure environment variables
+6. Start backend API and task worker
+
+```bash
+#Run The Backend servers with Docker Redis task worker and FastApi
+docker-compose up --build
+#OR
+#Run the below commands in separate terminals
+fastapi dev main.py
+celery -A tasks worker --loglevel=info
+```
+
+7. Start frontend
+
+```bash
+#Start frontend in a separate terminal
+npm run dev
+```
+   
+8. Submit qualitative query
+9. View charts + AI response + evaluation scores
+
+The above setup is given for Windows Operating system using Command Prompt.
 
 ## Future work / Roadmap
 
