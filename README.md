@@ -223,29 +223,27 @@ Each response includes evaluation scoring for transparency.
 - Optional: Neo4j instance
 
 ### High-Level Steps
+1. Clone the Repository Using
 ```bash
-#Clone the Repository Using
 https://github.com/harshad-paymode/QuantiGence.git
 ```
-
+2. Install Poetry from PyPi
 ```bash
-#Install Poetry from PyPi
+pip install poetry==2.2.1
+```
+3. Install Poetry from PyPi
+```bash
 pip install poetry==2.2.1
 ```
 
-```bash
-#Install Poetry from PyPi
-pip install poetry==2.2.1
-```
-
-To install the defined dependencies for QuantiGence, just run
+4. To install the defined dependencies for QuantiGence, just run
 
 ```bash
 poetry install
 ```
 
-Configure environment variables
-Start backend API and task worker
+5. Configure environment variables in a given .env file
+6. Start backend API and task worker
 
 ```bash
 #Run The Backend servers with Docker Redis task worker and FastApi
@@ -256,15 +254,15 @@ fastapi dev main.py
 celery -A tasks worker --loglevel=info
 ```
 
-Start frontend
+7. Start frontend
 
 ```bash
 #Start frontend in a separate terminal
 npm run dev
 ```
    
-Submit qualitative query
-View charts + AI response + evaluation scores
+8. Submit qualitative query
+9. View charts + AI response + evaluation scores
 
 The above setup is given for Windows Operating system using Command Prompt.
 
