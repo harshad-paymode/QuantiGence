@@ -1,7 +1,6 @@
 ## Table of Contents
 
 - [Vision & Summary](#vision--summary)   
-- [Project Scope (Why it’s “grand”)](#project-scope-why-its-grand)  
 - [High-level Architecture](#high-level-architecture)  
 - [Knowledge Graph — design & schema](#knowledge-graph---design--schema)  
   - [Core Nodes](#core-nodes)  
@@ -44,17 +43,15 @@ https://github.com/user-attachments/assets/1d0f6cd1-684b-4f2f-ac83-ee51424f25d8
 
 ## Vision & Summary
 
-QuantiGence is a financial research and analytics platform designed to unify structured financial analysis with LLM-driven qualitative reasoning.
+QuantiGence aims to make financial research faster and more reliable. It brings together time-series data, corporate filings, and LLM-driven reasoning — but with strict checks so claims are backed by sources.
 
-It combines:
-- Historical market data
-- SEC filings and corporate disclosures
-- A Knowledge Graph of entities and relationships
-- A supervised, auditable LLM orchestration pipeline
+In short:
 
-The goal is to produce grounded, citation-backed, evaluation-scored financial insights — not just answers.
-
-QuantiGence is built for researchers, analysts, and engineers who want transparent, reproducible AI-assisted financial intelligence.
+- Combine historical market data and company filings.
+- Build a small knowledge graph that links documents, sections, and text chunks.
+- Run a short, role-based pipeline (Researcher → Auditor → Analyst) so results are sourced, verified, and scored.
+- Give analysts transparent, reproducible answers — not guesses.
+- Who this is for: financial researchers, analysts, and engineers who want explainable AI support.
 
 ## High-level Architecture
 - **Data Sources**  
