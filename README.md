@@ -1,7 +1,6 @@
 ## Table of Contents
 
-- [Vision & Summary](#vision--summary)  
-- [Highlights & Strengths](#highlights--strengths)  
+- [Vision & Summary](#vision--summary)   
 - [Project Scope (Why it’s “grand”)](#project-scope-why-its-grand)  
 - [High-level Architecture](#high-level-architecture)  
 - [Knowledge Graph — design & schema](#knowledge-graph---design--schema)  
@@ -56,17 +55,6 @@ It combines:
 The goal is to produce grounded, citation-backed, evaluation-scored financial insights — not just answers.
 
 QuantiGence is built for researchers, analysts, and engineers who want transparent, reproducible AI-assisted financial intelligence.
-
-## Highlights & Strengths
-
-- **Hybrid Intelligence Architecture** — deterministic financial analytics + probabilistic LLM reasoning
-- **Knowledge Graph Backbone** — entity-centric modeling for relationship discovery
-- **Audited LLM Responses** — faithfulness and relevancy scoring
-- **Provenance-first Design** — traceable evidence from filings and data
-- **Multi-turn Context Memory** — supports analytical workflows
-- **Evaluation-Driven Outputs** — built-in DeepEval scoring
-- **Task-Oriented Orchestration** — Supervisor-driven role separation
-- **Scalable Data Model** — parquet-based analytics + graph-based reasoning
 
 ## High-level Architecture
 - **Data Sources**  
