@@ -74,25 +74,20 @@ In short:
 
 - **Frontend**  
   Presents synchronized quantitative visuals and qualitative narratives, shows provenance links, and displays evaluation scores (DeepEval). Designed for interactive, multi-turn analyst workflows.
-
-### Design goals reflected in the architecture
-
-- **Separation of concerns** — data, reasoning, verification, and presentation are modular.  
-- **Provenance & auditability** — every generated claim is traceable to data slices or node relationships.  
-- **Scalability** — parquet + async tasks + caching enable efficient handling of large time-series and heavy retrieval.  
-- **Safety-first orchestration** — an explicit Auditor role and evaluation metrics reduce hallucination risk and support human-in-the-loop review.
+  
 
 ## Knowledge Graph — design & schema
 
 QuantiGence models financial intelligence as an entity network.
 
-### Core Nodes
+We turn documents into small graph fragments so the system can walk from companies → filings → sections → text chunks.
 
-- **Company**
-- **Filing**
-- **Heading**
-- **Parent Chunk**
-- **Child Chunk**
+### Core Nodes
+- Company
+- Filing
+- Heading (section within a filing)
+- Parent Chunk (a chunk of text)
+- Child Chunk (sub-chunk or paragraph)
 
 ### Core Relationships
 
@@ -100,16 +95,14 @@ QuantiGence models financial intelligence as an entity network.
 - Filing → HAS_SECTION → Heading
 - Heading → HAS_CONTENT → ParentChunk
 - ParentChunk → HAS_CHILD → ChildChunk
-- Filing → NEXT → Filing #Between different quarters and years (temporal relationship) 
+- Filing → NEXT → Filing (temporal link across quarters/years)
 
-### Why It Matters
+### Why this helps:
 
-- Enables multi-hop reasoning
-- Connects textual disclosures to numeric trends
-- Supports temporal and relational analysis
-- Provides grounding context for LLM responses
-
-The Knowledge Graph transforms documents into structured intelligence.
+- You can trace a claim back to the exact chunk and filing.
+- It enables multi-hop queries (e.g., go from a product mention to the numeric trends).
+- Useful for grounding LLM outputs with precise links.
+- The Knowledge Graph transforms documents into structured intelligence.
 
 ## Persistence & DB choices (Cosmos DB, Redis, Neo4j, parquet)
 
@@ -141,23 +134,21 @@ Each system is chosen for what it does best.
 
 ## Prompts & Grounding policy (examples)
 
-QuantiGence enforces grounding-first LLM design.
+Short summary of how prompt and enforce grounding:
 
-### Grounding Rules
+### Rules
 
-- Every factual claim must be supported by evidence
-- Numeric claims must reference source tables
-- Uncertainty must be acknowledged
-- If unsupported → the model must abstain
+- Always attach evidence to factual claims.
+- Numeric claims must cite tables or time-series slices.
+- If evidence is weak or missing, the model should say so (abstain or use cautious language).
 
-### Prompt Design Philosophy
+### Prompt style
 
-- Retrieval-aware prompts
-- Citation-required generation
-- Structured verification loops
-- Role-specific instructions (Researcher vs Auditor vs Analyst)
+- Retrieval-aware prompts that list evidence items.
+- Role-specific instructions (e.g., “Researcher: return up to N passages with provenance”).
+- Verification loop: Analyst output → Auditor verification → final score.
 
-This reduces hallucinations and increases interpretability.
+This keeps the LLM focused and traceable.
 
 ## Safety & Evaluation (Auditor + DeepEval)
 
