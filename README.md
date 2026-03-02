@@ -64,7 +64,7 @@ QuantiGence is built for researchers, analysts, and engineers who want transpare
   - *Parquet* for compact, fast time-series reads and analytics.
   - *Neo4j* (or similar graph DB) to store entities, roles, and cross-document links for multi-hop queries.
   - *Redis* for low-latency orchestration state, caching, and session memory.
-  - *Cosmos DB / document store* for durable metadata, user preferences, and exported provenance.
+  - *Azure Cosmos DB / document store* for durable metadata, user preferences, and exported provenance.
 
 - **Orchestration Layer**  
   The Supervisor orchestrates work and enforces policies. Distinct role-workers carry out:
